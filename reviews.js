@@ -2,6 +2,7 @@ const request = require('request');
 const appstore = require('./appstorereviews.js');
 const googlePlay = require('./googleplayreviews.js');
 const fs = require('fs');
+const dataDir = "/var/lib/reviewme";
 
 const REVIEWS_STORES = {
     "APP_STORE": "app-store",
@@ -10,13 +11,17 @@ const REVIEWS_STORES = {
 
 var published_reviews;
 try {
-    published_reviews = JSON.parse(fs.readFileSync('./published_reviews.json'));
+    published_reviews = JSON.parse(fs.readFileSync(dataDir + '/published_reviews.json'));
 } catch (err) {
     published_reviews = {}
 }
 
 (function () {
     exports.start = function start(config) {
+        if (!fs.existsSync(dataDir)) {
+            fs.mkdirSync(dataDir, { recursive: true });
+        }
+
         if (!config.store) {
             // Determine from which store reviews are downloaded
             config.store = (config.appId.indexOf("\.") > -1) ? REVIEWS_STORES.GOOGLE_PLAY : REVIEWS_STORES.APP_STORE;
@@ -52,7 +57,7 @@ exports.markReviewAsPublished = function (config, review) {
         console.log("INFO: Review marked as published: " + JSON.stringify(published_reviews[config.appId]));
     }
 
-    fs.writeFileSync('./published_reviews.json', JSON.stringify(published_reviews), { flag: 'w' })
+    fs.writeFileSync(dataDir + '/published_reviews.json', JSON.stringify(published_reviews), { flag: 'w' })
 };
 
 exports.reviewPublished = function (config, review) {
